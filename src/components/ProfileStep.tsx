@@ -8,14 +8,12 @@ interface ProfileStepProps {
 
 export function ProfileStep({ initialProfile, onContinue }: ProfileStepProps) {
   const [name, setName] = useState(initialProfile.name)
-  const [email, setEmail] = useState(initialProfile.email)
   const [error, setError] = useState('')
 
   const doSubmit = () => {
     if (!name.trim()) { setError('Please enter your name.'); return }
-    if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email)) { setError('Please enter a valid email.'); return }
     setError('')
-    onContinue({ name: name.trim(), email: email.trim() })
+    onContinue({ name: name.trim() })
   }
 
   const handleSubmit = (event: FormEvent) => {
@@ -26,24 +24,15 @@ export function ProfileStep({ initialProfile, onContinue }: ProfileStepProps) {
   return (
     <section className="card profile-card">
       <h1>World Cup 2026 Bracket Builder</h1>
-      <p>Enter your details to start your wizard and save your picks locally.</p>
+      <p>Enter your name to start building your bracket — picks are saved locally.</p>
       <form className="form" onSubmit={handleSubmit}>
         <label>
           Name
           <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your full name" />
         </label>
-        <label>
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
-          />
-        </label>
         {error && <p className="error-text">{error}</p>}
         <button type="button" className="primary-btn" onClick={doSubmit}>
-          Start Wizard
+          Start Building Your Bracket
         </button>
       </form>
     </section>

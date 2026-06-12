@@ -958,82 +958,147 @@ textarea {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: grid;
-  place-items: center;
-  padding: 14px;
+  background: rgba(11, 42, 91, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
   z-index: 100;
+  animation: backdrop-in 0.2s ease;
+}
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .modal-card {
-  width: min(460px, 100%);
-  background: white;
-  border-radius: 12px;
-  padding: 18px;
+  width: min(520px, 100%);
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  border: 1px solid #d8e0ed;
+  box-shadow: 0 -8px 40px rgba(11, 42, 91, 0.18);
+  padding: 24px 20px max(20px, env(safe-area-inset-bottom));
+  max-height: 88dvh;
+  overflow-y: auto;
+  animation: sheet-up 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+  margin-top: 8px;
+}
+
+/* Drag handle pill */
+.modal-card::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 4px;
+  background: #d8e0ed;
+  border-radius: 2px;
+  margin: 0 auto 18px;
 }
 
 .tie-prompt {
-  max-height: min(560px, calc(100dvh - 32px));
-  overflow: auto;
+  /* sheet handles scrolling */
 }
 
 .tie-prompt h3 {
-  margin: 0 0 8px;
+  color: #0b2a5b;
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0 0 6px;
+  text-align: center;
 }
 
-.tie-prompt p {
+.tie-prompt > p {
   color: #48648f;
-  font-size: 0.9rem;
-  margin: 0 0 12px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0 0 16px;
+  text-align: center;
 }
 
 .tie-prompt-list {
   display: grid;
-  gap: 6px;
-  margin: 0 0 16px;
-  padding: 0;
+  gap: 12px;
+  margin: 0 0 12px;
 }
 
 .tie-choice-card {
-  background: #fffbeb;
-  border: 1px solid #fcd34d;
-  border-radius: 8px;
-  color: #92400e;
+  background: #f8f5eb;
+  border: 1.5px solid #d8e0ed;
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.tie-choice-card strong {
+  color: #0b2a5b;
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.tie-choice-desc {
+  color: #48648f;
   font-size: 0.78rem;
-  padding: 8px 10px;
+  margin: 0 0 10px;
 }
 
 .tie-choice-buttons {
   display: grid;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 8px;
 }
 
 .tie-choice-btn {
   align-items: center;
   background: #fff;
-  border: 1px solid #f59e0b;
-  border-radius: 8px;
+  border: 2px solid #d8e0ed;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(11, 42, 91, 0.07);
   color: #0b2a5b;
   cursor: pointer;
-  display: inline-flex;
+  display: flex;
   font: inherit;
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-weight: 700;
-  gap: 6px;
-  justify-content: center;
-  padding: 8px 10px;
+  gap: 10px;
+  justify-content: flex-start;
+  padding: 12px 16px;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s, border-color 0.12s, transform 0.1s, box-shadow 0.12s;
+}
+
+.tie-choice-btn .btn-flag {
+  width: 28px;
+  height: 20px;
+  border-radius: 3px;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .tie-choice-btn:hover {
-  background: #fef3c7;
+  background: #eef2f8;
+  border-color: #0b65d8;
+  box-shadow: 0 4px 12px rgba(11, 101, 216, 0.15);
+}
+
+.tie-choice-btn:active {
+  transform: scale(0.97);
 }
 
 .split-view {
@@ -1058,6 +1123,14 @@ textarea {
 
   .pick-chip kbd {
     display: none;
+  }
+
+  .pick-chip {
+    min-width: 80px;
+    min-height: 80px;
+    padding: 16px 20px;
+    font-size: 1rem;
+    justify-content: center;
   }
 }
 
@@ -1461,17 +1534,6 @@ textarea {
     font-size: 0.72rem;
   }
 
-  .modal-card {
-    padding: 14px;
-  }
-
-  .modal-card h3 {
-    font-size: 1rem;
-  }
-
-  .modal-card p {
-    font-size: 0.85rem;
-  }
 
   .wizard-actions {
     gap: 6px;

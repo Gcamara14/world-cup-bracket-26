@@ -22,7 +22,7 @@ function App() {
       }
     )
   })
-  const [started, setStarted] = useState(Boolean(state.profile.name && state.profile.email))
+  const [started, setStarted] = useState(Boolean(state.profile.name))
   const [showReview, setShowReview] = useState(Boolean(state.completedAt))
   const [showConfirm, setShowConfirm] = useState(false)
 

@@ -141,6 +141,7 @@ export function getPlacements(
   })
 
   const thirdPlaceGroups = thirdRows
+    .slice(0, 8)
     .map((row) => teamById.get(row.teamId)?.group)
     .filter(Boolean)
     .sort()
@@ -299,13 +300,15 @@ export function getThirdPlacePointTies(
     rowsByPoints.set(row.points, teamIds)
   }
 
-  const ties: ThirdPlacePointTie[] = []
-  for (const [points, teamIds] of rowsByPoints) {
-    const unresolvedTeamIds = teamIds.filter((teamId) => !thirdPlaceTieBreakers.includes(teamId))
-    if (teamIds.length > 1 && unresolvedTeamIds.length > 1) {
-      ties.push({ points, teamIds: unresolvedTeamIds })
+  // Return at most one tie prompt at a time — the first unresolved pair.
+  const sortedPointGroups = [...rowsByPoints.entries()].sort((a, b) => b[0] - a[0])
+  for (const [points, teamIds] of sortedPointGroups) {
+    if (teamIds.length < 2) continue
+    const unresolved = teamIds.filter((teamId) => !thirdPlaceTieBreakers.includes(teamId))
+    if (unresolved.length >= 2) {
+      return [{ points, teamIds: unresolved.slice(0, 2) }]
     }
   }
 
-  return ties.sort((a, b) => b.points - a.points)
+  return []
 }

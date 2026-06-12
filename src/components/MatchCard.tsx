@@ -33,7 +33,7 @@ export function MatchCard({ match, homeTeam, awayTeam, answer, canDraw, disabled
   return (
     <article className="card match-card-compact">
       <div className="match-meta">
-        <span>Match {match.id}</span>
+        <span>{match.stage === 'group' ? `Group ${match.group}` : `Match ${match.id}`}</span>
         <span>{match.stage.toUpperCase()}</span>
         <span>{match.localDate}</span>
       </div>
@@ -42,7 +42,7 @@ export function MatchCard({ match, homeTeam, awayTeam, answer, canDraw, disabled
           {homeWon && <span className="trophy-pop">🏆</span>}
           {homeTeam && <img src={homeTeam.flag} alt={homeTeam.name} className="team-flag" />}
           <span className="team-text">
-            <strong className={awayWon ? '' : ''}>{homeLabel}</strong>
+            <strong>{homeLabel}</strong>
             {homeSource && <small className="source-label">{homeSource}</small>}
           </span>
         </span>

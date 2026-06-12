@@ -39,7 +39,7 @@ export interface SourceMetadata {
 
 export interface Profile {
   name: string
-  email: string
+  email?: string
 }
 
 export type MatchPick = 'home' | 'away' | 'draw'

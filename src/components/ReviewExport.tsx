@@ -134,7 +134,7 @@ export function ReviewExport({ state, onEdit, onResetRequest }: ReviewExportProp
         <div className="card summary-narrative">
           <h3>Prediction Summary</h3>
           <p className="summary-meta">
-            <strong>{state.profile.name}</strong> ({state.profile.email}) &middot; {' '}
+            <strong>{state.profile.name}</strong> &middot; {' '}
             {Object.values(state.answersByMatchId).filter((a) => a.pick).length}/{matches.length} picks
           </p>
 
