@@ -113,8 +113,8 @@ export function Wizard({ state, onStateChange, onFinish, onResetRequest }: Wizar
               setTiePrompt(ties.groupTies)
               setThirdPlaceTiePrompt(ties.thirdPlaceTies)
               setTieTotalCount(ties.groupTies.length + ties.thirdPlaceTies.length)
+              setLocked(false)
             }, 350)
-            setLocked(false)
             return prev
           }
         }
@@ -138,12 +138,12 @@ export function Wizard({ state, onStateChange, onFinish, onResetRequest }: Wizar
     setLocked(true)
     setTiePrompt([])
     setThirdPlaceTiePrompt([])
+    console.log(
+      `%c[PICK] Match ${m.id} (step ${stepAtPick}) | Stage: ${m.stage} | Pick: ${pick}`,
+      'color: #0b65d8; font-weight: bold',
+    )
     onStateChange((prev) => {
       if (prev.activeStep !== stepAtPick) return prev
-      console.log(
-        `%c[PICK] Match ${m.id} (step ${stepAtPick}) | Stage: ${m.stage} | Pick: ${pick}`,
-        'color: #0b65d8; font-weight: bold',
-      )
       return {
         ...prev,
         answersByMatchId: {
@@ -164,9 +164,11 @@ export function Wizard({ state, onStateChange, onFinish, onResetRequest }: Wizar
       if (nextMatch && nextMatch.stage !== 'group') {
         const ties = getTiePrompt(prev.answersByMatchId, prev.groupTieBreakers, prev.thirdPlaceTieBreakers)
         if (ties.groupTies.length || ties.thirdPlaceTies.length) {
-          setTiePrompt(ties.groupTies)
-          setThirdPlaceTiePrompt(ties.thirdPlaceTies)
-          setTieTotalCount(ties.groupTies.length + ties.thirdPlaceTies.length)
+          window.setTimeout(() => {
+            setTiePrompt(ties.groupTies)
+            setThirdPlaceTiePrompt(ties.thirdPlaceTies)
+            setTieTotalCount(ties.groupTies.length + ties.thirdPlaceTies.length)
+          }, 0)
           return prev
         }
       }
@@ -303,7 +305,7 @@ export function Wizard({ state, onStateChange, onFinish, onResetRequest }: Wizar
       ]
       const tables = computeGroupTables(prev.answersByMatchId, prev.groupTieBreakers)
       const nextThirdTies = getThirdPlacePointTies(tables, prev.answersByMatchId, newTieBreakers)
-      setThirdPlaceTiePrompt(nextThirdTies)
+      window.setTimeout(() => setThirdPlaceTiePrompt(nextThirdTies), 0)
       return { ...prev, thirdPlaceTieBreakers: newTieBreakers }
     })
   }, [onStateChange])
