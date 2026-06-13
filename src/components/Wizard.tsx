@@ -53,13 +53,15 @@ export function Wizard({ state, onStateChange, onFinish, onResetRequest }: Wizar
   const [inputLocked, setInputLocked] = useState(false)
   const [tiePrompt, setTiePrompt] = useState<GroupPointTie[]>([])
   const [thirdPlaceTiePrompt, setThirdPlaceTiePrompt] = useState<ThirdPlacePointTie[]>([])
+  const [tieTotalCount, setTieTotalCount] = useState(0)
   const stateRef = useRef(state)
   const inputLockedRef = useRef(false)
   const dialogOpenRef = useRef(false)
   const advanceTimerRef = useRef<number | null>(null)
   const pressedKeysRef = useRef(new Set<string>())
+  const dialogOpen = tiePrompt.length > 0 || thirdPlaceTiePrompt.length > 0
   stateRef.current = state
-  dialogOpenRef.current = tiePrompt.length > 0 || thirdPlaceTiePrompt.length > 0
+  dialogOpenRef.current = dialogOpen
 
   const setLocked = useCallback((locked: boolean) => {
     inputLockedRef.current = locked
@@ -107,11 +109,10 @@ export function Wizard({ state, onStateChange, onFinish, onResetRequest }: Wizar
         if (nextMatch && nextMatch.stage !== 'group') {
           const ties = getTiePrompt(prev.answersByMatchId, prev.groupTieBreakers, prev.thirdPlaceTieBreakers)
           if (ties.groupTies.length || ties.thirdPlaceTies.length) {
-            // TODO: ideally the tie dialog should animate in more gracefully rather
-            // than flashing over the pick animation — delay it slightly for now.
             window.setTimeout(() => {
               setTiePrompt(ties.groupTies)
               setThirdPlaceTiePrompt(ties.thirdPlaceTies)
+              setTieTotalCount(ties.groupTies.length + ties.thirdPlaceTies.length)
             }, 350)
             setLocked(false)
             return prev
@@ -165,6 +166,7 @@ export function Wizard({ state, onStateChange, onFinish, onResetRequest }: Wizar
         if (ties.groupTies.length || ties.thirdPlaceTies.length) {
           setTiePrompt(ties.groupTies)
           setThirdPlaceTiePrompt(ties.thirdPlaceTies)
+          setTieTotalCount(ties.groupTies.length + ties.thirdPlaceTies.length)
           return prev
         }
       }
@@ -194,7 +196,6 @@ export function Wizard({ state, onStateChange, onFinish, onResetRequest }: Wizar
       const cur = matches[stateRef.current.activeStep]
       const isGroup = cur?.stage === 'group'
 
-      // Quick pick shortcuts: A=home, S=draw, D=away, W=back
       if (key === 'a' || key === '1') {
         e.preventDefault()
         doPick('home')
@@ -309,7 +310,7 @@ export function Wizard({ state, onStateChange, onFinish, onResetRequest }: Wizar
 
   return (
     <section className="wizard-shell" ref={wizardRef}>
-      <div className="wizard-sticky-panel">
+      <div className={`wizard-sticky-panel${dialogOpen ? ' dialog-is-open' : ''}`}>
         <ProgressBar current={completed} total={total} label={`Stage: ${currentMatch.stage.toUpperCase()}`} />
         <div className={`stage-banner stage-${currentMatch.stage}`}>
           <span className="stage-eyebrow">Current Stage</span>
@@ -332,28 +333,39 @@ export function Wizard({ state, onStateChange, onFinish, onResetRequest }: Wizar
           <button type="button" className="danger-btn" onClick={onResetRequest}>
             Reset
           </button>
-          <button
-            type="button"
-            className="primary-btn"
-            onClick={goNext}
-            disabled={!currentHasPick}
-          >
-            {allPicked ? 'Finish' : 'Forward'}
-          </button>
+          {!dialogOpen && (allPicked || (currentHasPick && state.activeStep < total - 1)) && (
+            <button type="button" className="primary-btn" onClick={goNext}>
+              {allPicked ? 'Finish' : 'Next →'}
+            </button>
+          )}
         </div>
         <p className="keybind-hint">
           <kbd>A</kbd> left &nbsp; <kbd>S</kbd> draw &nbsp; <kbd>D</kbd> right &nbsp; <kbd>W</kbd> back
         </p>
       </div>
-      {(tiePrompt.length > 0 || thirdPlaceTiePrompt.length > 0) && (
+      {dialogOpen && (
         <div className="modal-backdrop" role="presentation">
           <div className="modal-card tie-prompt" role="dialog" aria-modal="true" aria-label="Fix group ties">
-            <h3>Break the tie</h3>
-            <p>These teams are level on points. Pick who finishes higher.</p>
+            <h3>Choose who advances</h3>
+            <p>Some teams finished even. Tap the team that should rank higher.</p>
+            {tieTotalCount > 1 && (() => {
+              const remaining = tiePrompt.length + thirdPlaceTiePrompt.length
+              const resolved = tieTotalCount - remaining
+              const pct = Math.round((resolved / tieTotalCount) * 100)
+              return (
+                <div className="tie-progress">
+                  <div className="tie-progress-track">
+                    <div className="tie-progress-bar" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span>{resolved} of {tieTotalCount} done</span>
+                </div>
+              )
+            })()}
             <div className="tie-prompt-list">
               {tiePrompt.map((tie) => (
                 <div key={`${tie.group}-${tie.points}-${tie.teamIds.join('-')}`} className="tie-choice-card">
-                  <strong>Group {tie.group} · {tie.points} pts each</strong>
+                  <strong>Group {tie.group}</strong>
+                  <p className="tie-choice-desc">Choose who finishes higher in this group.</p>
                   <div className="tie-choice-buttons">
                     {tie.teamIds.map((teamId) => {
                       const team = teamById.get(teamId)
@@ -372,17 +384,16 @@ export function Wizard({ state, onStateChange, onFinish, onResetRequest }: Wizar
                   </div>
                 </div>
               ))}
-              {thirdPlaceTiePrompt.map((tie) => {
+              {thirdPlaceTiePrompt.map((tie, i) => {
                 const [teamAId, teamBId] = tie.teamIds
                 const teamA = teamById.get(teamAId)
                 const teamB = teamById.get(teamBId)
                 return (
-                  <div key={`third-${tie.points}-${tie.teamIds.join('-')}`} className="tie-choice-card">
-                    <strong>Best 3rd place · {tie.points} pts each</strong>
-                    <p className="tie-choice-desc">Who ranks higher?</p>
+                  <div key={`third-${tie.points}-${i}`} className="tie-choice-card">
+                    <strong>Best 3rd-place teams</strong>
+                    <p className="tie-choice-desc">Choose who should rank higher for the knockout spots.</p>
                     <div className="tie-choice-buttons">
                       <button
-                        key={teamAId}
                         type="button"
                         className="tie-choice-btn"
                         onClick={() => chooseThirdPlaceTieBreaker(tie, teamAId)}
@@ -391,7 +402,6 @@ export function Wizard({ state, onStateChange, onFinish, onResetRequest }: Wizar
                         {teamA?.name ?? teamAId}
                       </button>
                       <button
-                        key={teamBId}
                         type="button"
                         className="tie-choice-btn"
                         onClick={() => chooseThirdPlaceTieBreaker(tie, teamBId)}

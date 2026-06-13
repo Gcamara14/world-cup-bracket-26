@@ -33,9 +33,10 @@ export function MatchCard({ match, homeTeam, awayTeam, answer, canDraw, disabled
   return (
     <article className="card match-card-compact">
       <div className="match-meta">
-        <span>{match.stage === 'group' ? `Group ${match.group}` : `Match ${match.id}`}</span>
+        <span>Match {match.id}</span>
         <span>{match.stage.toUpperCase()}</span>
         <span>{match.localDate}</span>
+        {match.stage === 'group' && <span className="match-meta-group">Group {match.group}</span>}
       </div>
       <div className="match-title-compact">
         <span className={`team-side ${homeWon ? 'team-picked' : ''} ${awayWon ? 'team-out' : ''}`}>

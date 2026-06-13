@@ -300,15 +300,19 @@ export function getThirdPlacePointTies(
     rowsByPoints.set(row.points, teamIds)
   }
 
-  // Return at most one tie prompt at a time — the first unresolved pair.
+  // Return ALL unresolved pairs at once so the user can see the full picture.
+  // Each pair is a separate ThirdPlacePointTie entry.
   const sortedPointGroups = [...rowsByPoints.entries()].sort((a, b) => b[0] - a[0])
+  const allPairs: ThirdPlacePointTie[] = []
   for (const [points, teamIds] of sortedPointGroups) {
     if (teamIds.length < 2) continue
     const unresolved = teamIds.filter((teamId) => !thirdPlaceTieBreakers.includes(teamId))
     if (unresolved.length >= 2) {
-      return [{ points, teamIds: unresolved.slice(0, 2) }]
+      // Emit successive pairs: (0,1), (1,2), ... so each choice feeds into the next
+      for (let i = 0; i < unresolved.length - 1; i++) {
+        allPairs.push({ points, teamIds: [unresolved[i], unresolved[i + 1]] })
+      }
     }
   }
-
-  return []
+  return allPairs
 }
