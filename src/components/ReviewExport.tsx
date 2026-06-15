@@ -13,18 +13,19 @@ interface ReviewExportProps {
 }
 
 const groupLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
-const knockoutStages = ['r32', 'r16', 'qf', 'sf', 'final'] as const
-const stageLabels: Record<string, string> = { r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-Finals', sf: 'Semi-Finals', final: 'Final' }
+const knockoutStages = ['r32', 'r16', 'qf', 'sf', 'third', 'final'] as const
+const stageLabels: Record<string, string> = { r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-Finals', sf: 'Semi-Finals', third: '3rd Place', final: 'Final' }
 
 export function ReviewExport({ state, onEdit, onResetRequest }: ReviewExportProps) {
   const exportRef = useRef<HTMLDivElement>(null)
   const [busy, setBusy] = useState(false)
   const [exporting, setExporting] = useState(false)
 
-  const { tables, placements, championId, runnerUpId } = useMemo(() => {
+  const { tables, placements, championId, runnerUpId, thirdPlaceId } = useMemo(() => {
     const t = computeGroupTables(state.answersByMatchId, state.groupTieBreakers)
     const p = getPlacements(t, state.thirdPlaceTieBreakers)
     const finalMatch = matches.find((m) => m.stage === 'final')
+    const thirdMatch = matches.find((m) => m.stage === 'third')
     const champ = finalMatch ? getPredictedWinner(finalMatch.id, state.answersByMatchId, p) : null
     let runner: string | null = null
     if (finalMatch) {
@@ -34,11 +35,13 @@ export function ReviewExport({ state, onEdit, onResetRequest }: ReviewExportProp
         runner = resolveMatchSideTeam(finalMatch, losingSide, state.answersByMatchId, p)
       }
     }
-    return { tables: t, placements: p, championId: champ, runnerUpId: runner }
+    const third = thirdMatch ? getPredictedWinner(thirdMatch.id, state.answersByMatchId, p) : null
+    return { tables: t, placements: p, championId: champ, runnerUpId: runner, thirdPlaceId: third }
   }, [state.answersByMatchId, state.groupTieBreakers, state.thirdPlaceTieBreakers])
 
   const champion = championId ? teamById.get(championId) : null
   const runnerUp = runnerUpId ? teamById.get(runnerUpId) : null
+  const thirdPlace = thirdPlaceId ? teamById.get(thirdPlaceId) : null
 
   const captureExportSheet = async () => {
     if (!exportRef.current) return null
@@ -174,6 +177,35 @@ export function ReviewExport({ state, onEdit, onResetRequest }: ReviewExportProp
             {Object.values(state.answersByMatchId).filter((a) => a.pick).length}/{matches.length} picks
           </p>
 
+          {(champion || runnerUp || thirdPlace) && (
+            <div className="summary-podium">
+              {champion && (
+                <div className="summary-podium-item summary-podium-item--1st">
+                  <span className="summary-podium-medal">🏆</span>
+                  <img src={champion.flag} alt="" className="btn-flag" />
+                  <span className="summary-podium-name">{champion.fifaCode}</span>
+                  <span className="summary-podium-label">Champion</span>
+                </div>
+              )}
+              {runnerUp && (
+                <div className="summary-podium-item summary-podium-item--2nd">
+                  <span className="summary-podium-medal">🥈</span>
+                  <img src={runnerUp.flag} alt="" className="btn-flag" />
+                  <span className="summary-podium-name">{runnerUp.fifaCode}</span>
+                  <span className="summary-podium-label">Runner-up</span>
+                </div>
+              )}
+              {thirdPlace && (
+                <div className="summary-podium-item summary-podium-item--3rd">
+                  <span className="summary-podium-medal">🥉</span>
+                  <img src={thirdPlace.flag} alt="" className="btn-flag" />
+                  <span className="summary-podium-name">{thirdPlace.fifaCode}</span>
+                  <span className="summary-podium-label">3rd Place</span>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="summary-sections">
             <div className="summary-block">
               <h4>Group Stage Qualifiers</h4>
@@ -185,10 +217,13 @@ export function ReviewExport({ state, onEdit, onResetRequest }: ReviewExportProp
                     <div key={group} className="summary-group-item">
                       <span className="summary-group-label">Group {group}</span>
                       <span className="summary-qualifier-list">
-                        {top2.map((row) => {
+                        {top2.map((row, idx) => {
                           const team = teamById.get(row.teamId)
                           return team ? (
                             <span key={team.id} className="summary-qualifier">
+                              <span className={`summary-position summary-position--${idx === 0 ? '1st' : '2nd'}`}>
+                                {idx === 0 ? '1st' : '2nd'}
+                              </span>
                               <img src={team.flag} alt="" className="btn-flag" />
                               {team.fifaCode}
                             </span>
