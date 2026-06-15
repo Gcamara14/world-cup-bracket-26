@@ -1023,11 +1023,38 @@ textarea {
   padding-bottom: 12px;
 }
 
+.export-method-summary h3 {
+  margin: 0 0 8px;
+}
+
+.export-method-summary p {
+  color: #48648f;
+  line-height: 1.55;
+  margin: 0;
+}
+
 .export-sheet {
   display: grid;
   gap: 16px;
   max-width: 100%;
   overflow: hidden;
+}
+
+.export-sheet.is-exporting {
+  max-width: none;
+  overflow: visible;
+}
+
+.export-sheet.is-exporting .google-bracket-shell {
+  min-width: max-content;
+}
+
+.export-sheet.is-exporting .google-bracket-scroll {
+  overflow: visible;
+}
+
+.export-sheet.is-exporting .google-bracket-grid {
+  width: max-content;
 }
 
 .modal-backdrop {

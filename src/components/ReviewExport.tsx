@@ -19,6 +19,7 @@ const stageLabels: Record<string, string> = { r32: 'Round of 32', r16: 'Round of
 export function ReviewExport({ state, onEdit, onResetRequest }: ReviewExportProps) {
   const exportRef = useRef<HTMLDivElement>(null)
   const [busy, setBusy] = useState(false)
+  const [exporting, setExporting] = useState(false)
 
   const { tables, placements, championId, runnerUpId } = useMemo(() => {
     const t = computeGroupTables(state.answersByMatchId, state.groupTieBreakers)
@@ -39,16 +40,40 @@ export function ReviewExport({ state, onEdit, onResetRequest }: ReviewExportProp
   const champion = championId ? teamById.get(championId) : null
   const runnerUp = runnerUpId ? teamById.get(runnerUpId) : null
 
+  const captureExportSheet = async () => {
+    if (!exportRef.current) return null
+    setExporting(true)
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+
+    const node = exportRef.current
+    const width = Math.ceil(Math.max(node.scrollWidth, node.offsetWidth))
+    const height = Math.ceil(Math.max(node.scrollHeight, node.offsetHeight))
+
+    return toPng(node, {
+      pixelRatio: 2,
+      width,
+      height,
+      style: {
+        width: `${width}px`,
+        height: `${height}px`,
+        maxWidth: 'none',
+        overflow: 'visible',
+      },
+    })
+  }
+
   const downloadScreenshot = async () => {
     if (!exportRef.current) return
     setBusy(true)
     try {
-      const dataUrl = await toPng(exportRef.current, { pixelRatio: 2 })
+      const dataUrl = await captureExportSheet()
+      if (!dataUrl) return
       const link = document.createElement('a')
       link.download = `world-cup-2026-${state.profile.name || 'bracket'}.png`
       link.href = dataUrl
       link.click()
     } finally {
+      setExporting(false)
       setBusy(false)
     }
   }
@@ -57,7 +82,8 @@ export function ReviewExport({ state, onEdit, onResetRequest }: ReviewExportProp
     if (!exportRef.current) return
     setBusy(true)
     try {
-      const dataUrl = await toPng(exportRef.current, { pixelRatio: 2 })
+      const dataUrl = await captureExportSheet()
+      if (!dataUrl) return
       const pdf = new jsPDF('p', 'mm', 'a4')
       const width = pdf.internal.pageSize.getWidth()
       const height = pdf.internal.pageSize.getHeight()
@@ -81,6 +107,7 @@ export function ReviewExport({ state, onEdit, onResetRequest }: ReviewExportProp
 
       pdf.save(`world-cup-2026-${state.profile.name || 'bracket'}.pdf`)
     } finally {
+      setExporting(false)
       setBusy(false)
     }
   }
@@ -102,7 +129,7 @@ export function ReviewExport({ state, onEdit, onResetRequest }: ReviewExportProp
         </button>
       </div>
 
-      <div className="export-sheet" ref={exportRef}>
+      <div className={`export-sheet${exporting ? ' is-exporting' : ''}`} ref={exportRef}>
         <div className="champion-section card">
           {champion ? (
             <>
@@ -127,6 +154,15 @@ export function ReviewExport({ state, onEdit, onResetRequest }: ReviewExportProp
               <p className="champion-subtitle">Finish all picks to see your champion</p>
             </>
           )}
+        </div>
+
+        <div className="card export-method-summary">
+          <h3>How This Bracket Was Built</h3>
+          <p>
+            {state.profile.name} picked all {matches.length} World Cup matches from the group stage through the final.
+            Group standings were calculated from those picks, tied teams were resolved with tiebreakers, and each knockout
+            round advanced the selected winners until the champion was crowned.
+          </p>
         </div>
 
         <BracketVisualizer state={state} />
